@@ -1,0 +1,11 @@
+# Main Swagger UI
+http://localhost:8000/swagger/
+
+# Alternative ReDoc
+http://localhost:8000/redoc/
+
+# Raw OpenAPI Schema
+http://localhost:8000/openapi.json
+
+# Health Check
+http://localhost:8000/api/health/
