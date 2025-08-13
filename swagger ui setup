@@ -1,0 +1,1179 @@
+# =============================================================================
+# SWAGGER UI SETUP - Complete API Documentation Configuration
+# =============================================================================
+
+# =============================================================================
+# 1. INSTALL REQUIRED PACKAGES
+# =============================================================================
+
+"""
+Add these packages to your requirements.txt:
+
+drf-yasg==1.21.7
+swagger-spec-validator==3.0.3
+"""
+
+# =============================================================================
+# 2. SWAGGER CONFIGURATION FILE
+# =============================================================================
+
+# File: employee_project/swagger_config.py
+
+import os
+from django.conf import settings
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
+def get_api_info():
+    """
+    Generate API Info from environment variables
+    """
+    return openapi.Info(
+        title=os.getenv('API_TITLE', 'Employee Management System API'),
+        default_version=os.getenv('API_VERSION', 'v1.0.0'),
+        description=os.getenv(
+            'API_DESCRIPTION',
+            """
+            # 🏢 Employee Management System API
+
+            Welcome to the comprehensive Employee Management System API! This RESTful API provides 
+            complete functionality for managing employees, departments, attendance, performance 
+            reviews, and organizational analytics.
+
+            ## 🚀 Key Features
+
+            ### 👥 **Employee Management**
+            - Complete CRUD operations for employee profiles
+            - Department-based organization structure
+            - Employee status management (Active/Inactive/Terminated)
+            - Automated employee ID generation
+            - Advanced search and filtering capabilities
+
+            ### 📊 **Attendance & Leave Management**
+            - Daily attendance tracking with multiple status types
+            - Check-in/check-out time management
+            - Leave request workflow with approval system
+            - Attendance reports and analytics
+            - Bulk attendance operations
+
+            ### 🎯 **Performance Management**
+            - Quarterly, half-yearly, and annual performance reviews
+            - Goal setting and progress tracking
+            - Performance analytics and reporting
+            - Rating system with detailed feedback
+
+            ### 📈 **Analytics & Reporting**
+            - Real-time employee statistics
+            - Department-wise analytics
+            - Attendance trend analysis
+            - Performance insights and KPIs
+
+            ## 🔐 Authentication
+
+            This API uses **Token-based authentication**. To access protected endpoints:
+
+            1. **Obtain Token**: Send POST request to `/api/auth/login/` with username/password
+            2. **Use Token**: Include in Authorization header: `Authorization: Token your_token_here`
+
+            ### Example Authentication Flow:
+            ```bash
+            # 1. Login to get token
+            curl -X POST http://localhost:8000/api/auth/login/ \\
+                -H "Content-Type: application/json" \\
+                -d '{"username": "admin", "password": "password123"}'
+
+            # Response: {"token": "your_token_here"}
+
+            # 2. Use token in subsequent requests
+            curl -H "Authorization: Token your_token_here" \\
+                http://localhost:8000/api/employees/employees/
+            ```
+
+            ## 📄 Pagination
+
+            List endpoints support pagination with the following parameters:
+            - `page`: Page number (default: 1)
+            - `page_size`: Results per page (default: 20, max: 100)
+
+            Example: `/api/employees/employees/?page=2&page_size=50`
+
+            ## 🔍 Filtering & Search
+
+            Most list endpoints support advanced filtering:
+            - **Text Search**: `?search=john` (searches across multiple fields)
+            - **Field Filtering**: `?department=1&status=ACTIVE`
+            - **Date Filtering**: `?date_from=2024-01-01&date_to=2024-12-31`
+            - **Ordering**: `?ordering=-date_joined` (prefix with - for descending)
+
+            ### Filter Examples:
+            ```
+            # Search employees by name or email
+            GET /api/employees/employees/?search=john
+
+            # Filter by department and status
+            GET /api/employees/employees/?department=1&status=ACTIVE
+
+            # Get attendance for specific date range
+            GET /api/attendance/attendance/?date_from=2024-01-01&date_to=2024-01-31
+
+            # Sort employees by join date (newest first)
+            GET /api/employees/employees/?ordering=-date_joined
+            ```
+
+            ## 🚦 Rate Limiting
+
+            - **Anonymous users**: 100 requests/hour
+            - **Authenticated users**: 1000 requests/hour
+
+            ## 📋 Response Format
+
+            All API responses follow a consistent format:
+
+            ### Success Response:
+            ```json
+            {
+                "count": 150,
+                "next": "http://api.example.com/employees/?page=2",
+                "previous": null,
+                "results": [...]
+            }
+            ```
+
+            ### Error Response:
+            ```json
+            {
+                "detail": "Error message here",
+                "field_errors": {
+                    "email": ["This field is required."]
+                }
+            }
+            ```
+
+            ## 🔢 HTTP Status Codes
+
+            | Code | Description |
+            |------|-------------|
+            | 200 | OK - Request successful |
+            | 201 | Created - Resource created successfully |
+            | 400 | Bad Request - Invalid data provided |
+            | 401 | Unauthorized - Authentication required |
+            | 403 | Forbidden - Insufficient permissions |
+            | 404 | Not Found - Resource doesn't exist |
+            | 429 | Too Many Requests - Rate limit exceeded |
+            | 500 | Internal Server Error - Server error |
+
+            ## 🛠 SDK & Code Examples
+
+            ### Python Example:
+            ```python
+            import requests
+
+            # Set up authentication
+            headers = {'Authorization': 'Token your_token_here'}
+            base_url = 'http://localhost:8000/api'
+
+            # Get all employees
+            response = requests.get(f'{base_url}/employees/employees/', headers=headers)
+            employees = response.json()
+
+            # Create new employee
+            new_employee = {
+                'name': 'John Doe',
+                'email': 'john@example.com',
+                'department': 1,
+                'position': 'Developer'
+            }
+            response = requests.post(f'{base_url}/employees/employees/', 
+                                   json=new_employee, headers=headers)
+            ```
+
+            ### JavaScript Example:
+            ```javascript
+            // Set up authentication
+            const token = 'your_token_here';
+            const baseURL = 'http://localhost:8000/api';
+
+            // Fetch employees
+            fetch(`${baseURL}/employees/employees/`, {
+                headers: {
+                    'Authorization': `Token ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => console.log(data));
+            ```
+
+            ## 📚 Additional Resources
+
+            - **Admin Interface**: `/admin/` - Django admin for data management
+            - **Dashboard**: `/charts/` - Visual analytics and reports
+            - **Health Check**: `/api/health/` - API status monitoring
+            - **OpenAPI Schema**: `/openapi.json` - Raw API specification
+
+            ## 🆘 Support
+
+            For technical support or questions:
+            - **Email**: {contact_email}
+            - **GitHub**: [Project Repository](https://github.com/yourusername/employee-management)
+            - **Documentation**: This interactive API documentation
+
+            ---
+            *Last updated: {last_updated}*
+            """.format(
+                contact_email=os.getenv('API_CONTACT_EMAIL', 'support@yourcompany.com'),
+                last_updated='2024-01-01'
+            )
+        ),
+        terms_of_service=os.getenv(
+            'API_TERMS_OF_SERVICE', 
+            'https://yourcompany.com/terms-of-service/'
+        ),
+        contact=openapi.Contact(
+            name=os.getenv('API_CONTACT_NAME', 'API Support Team'),
+            email=os.getenv('API_CONTACT_EMAIL', 'api-support@yourcompany.com'),
+            url="https://github.com/yourusername/employee-management-system"
+        ),
+        license=openapi.License(
+            name=os.getenv('API_LICENSE_NAME', 'MIT License'),
+            url=os.getenv('API_LICENSE_URL', 'https://opensource.org/licenses/MIT')
+        ),
+        x_logo={
+            "url": "https://raw.githubusercontent.com/yourusername/employee-management/main/logo.png",
+            "altText": "Employee Management System"
+        }
+    )
+
+# Schema View Configuration
+schema_view = get_schema_view(
+    get_api_info(),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
+    authentication_classes=[],
+)
+
+# =============================================================================
+# 3. UPDATE SETTINGS.PY - Add Swagger Configuration
+# =============================================================================
+
+# Add this to your employee_project/settings.py
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    
+    # Third party apps
+    'rest_framework',
+    'rest_framework.authtoken',
+    'drf_yasg',  # Add this for Swagger
+    'django_filters',
+    'corsheaders',
+    
+    # Local apps
+    'employees.apps.EmployeesConfig',
+    'attendance.apps.AttendanceConfig',
+    'performance.apps.PerformanceConfig',
+    'charts.apps.ChartsConfig',
+]
+
+# Swagger Settings
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Token': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header',
+            'description': 'Token-based authentication. Enter: Token your_token_here'
+        },
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization', 
+            'in': 'header',
+            'description': 'JWT authentication. Enter: Bearer your_jwt_token_here'
+        }
+    },
+    'USE_SESSION_AUTH': True,
+    'JSON_EDITOR': True,
+    'SUPPORTED_SUBMIT_METHODS': [
+        'get', 'post', 'put', 'delete', 'patch'
+    ],
+    'OPERATIONS_SORTER': 'alpha',
+    'TAGS_SORTER': 'alpha',
+    'DOC_EXPANSION': 'none',
+    'DEEP_LINKING': True,
+    'SHOW_EXTENSIONS': True,
+    'DEFAULT_MODEL_RENDERING': 'model',
+    'DEFAULT_MODEL_DEPTH': 3,
+    'SHOW_COMMON_EXTENSIONS': True,
+    'REFETCH_SCHEMA_WITH_AUTH': True,
+    'REFETCH_SCHEMA_ON_LOGOUT': True,
+    'DEFAULT_INFO': 'employee_project.swagger_config.get_api_info',
+    'SPEC_URL': '/swagger.json',
+    'LOGIN_URL': os.getenv('SWAGGER_LOGIN_URL', '/admin/login/'),
+    'LOGOUT_URL': os.getenv('SWAGGER_LOGOUT_URL', '/admin/logout/'),
+}
+
+# ReDoc Settings
+REDOC_SETTINGS = {
+    'LAZY_RENDERING': False,
+    'HIDE_HOSTNAME': False,
+    'EXPAND_RESPONSES': ['200', '201'],
+    'PATH_IN_MIDDLE': True,
+    'NATIVE_SCROLLBARS': False,
+    'THEME': {
+        'colors': {
+            'primary': {
+                'main': '#3498db'
+            }
+        },
+        'typography': {
+            'fontSize': '14px',
+            'lineHeight': '1.5em',
+            'code': {
+                'fontSize': '13px'
+            }
+        },
+        'sidebar': {
+            'width': '300px'
+        }
+    }
+}
+
+# =============================================================================
+# 4. UPDATE MAIN URLS.PY - Add Swagger URLs
+# =============================================================================
+
+# File: employee_project/urls.py
+
+from django.contrib import admin
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+from .swagger_config import schema_view
+
+urlpatterns = [
+    # Admin
+    path('admin/', admin.site.urls),
+    
+    # API Authentication
+    path('api/auth/', include('rest_framework.urls')),
+    
+    # API Endpoints
+    path('api/employees/', include('employees.urls')),
+    path('api/attendance/', include('attendance.urls')),
+    path('api/performance/', include('performance.urls')),
+    
+    # Dashboard
+    path('charts/', include('charts.urls')),
+    
+    # API Documentation URLs
+    path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    path('openapi.json', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    path('openapi.yaml', schema_view.without_ui(cache_timeout=0), name='schema-yaml'),
+    
+    # API Health Check
+    path('api/health/', include('employee_project.health_urls')),
+]
+
+# Serve static and media files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# =============================================================================
+# 5. ENHANCED SERIALIZERS WITH SWAGGER DOCUMENTATION
+# =============================================================================
+
+# File: employees/serializers.py (Enhanced version)
+
+from rest_framework import serializers
+from drf_yasg.utils import swagger_serializer_method
+from drf_yasg import openapi
+from .models import Employee, Department
+
+class DepartmentSerializer(serializers.ModelSerializer):
+    """
+    Department serializer with employee statistics
+    
+    Provides comprehensive department information including
+    active employee count and creation timestamps.
+    """
+    employee_count = serializers.ReadOnlyField(
+        help_text="Total number of employees in this department"
+    )
+    active_employee_count = serializers.SerializerMethodField(
+        help_text="Number of active employees in this department"
+    )
+
+    class Meta:
+        model = Department
+        fields = [
+            'id', 'name', 'description', 'employee_count', 
+            'active_employee_count', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at']
+
+    @swagger_serializer_method(serializer_or_field=serializers.IntegerField())
+    def get_active_employee_count(self, obj):
+        """Return count of active employees in this department"""
+        return obj.employees.filter(status='ACTIVE').count()
+
+class EmployeeListSerializer(serializers.ModelSerializer):
+    """
+    Simplified employee serializer for list views
+    
+    Optimized for performance with essential fields only.
+    """
+    department_name = serializers.CharField(
+        source='department.name', 
+        read_only=True,
+        help_text="Name of the department this employee belongs to"
+    )
+    years_of_service = serializers.ReadOnlyField(
+        help_text="Number of years the employee has been with the company"
+    )
+
+    class Meta:
+        model = Employee
+        fields = [
+            'id', 'employee_id', 'name', 'email', 'phone_number',
+            'department_name', 'position', 'status', 'date_joined', 
+            'years_of_service'
+        ]
+
+class EmployeeDetailSerializer(serializers.ModelSerializer):
+    """
+    Comprehensive employee serializer for detail views
+    
+    Includes all employee information with related data.
+    """
+    department_name = serializers.CharField(
+        source='department.name', 
+        read_only=True,
+        help_text="Department name"
+    )
+    years_of_service = serializers.ReadOnlyField(
+        help_text="Years of service calculated from join date"
+    )
+    attendance_summary = serializers.SerializerMethodField(
+        help_text="Recent attendance summary"
+    )
+
+    class Meta:
+        model = Employee
+        fields = [
+            'id', 'employee_id', 'name', 'email', 'phone_number',
+            'address', 'date_of_birth', 'gender', 'date_joined',
+            'department', 'department_name', 'salary', 'position',
+            'status', 'years_of_service', 'attendance_summary',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['employee_id', 'years_of_service', 'created_at', 'updated_at']
+
+    @swagger_serializer_method(serializer_or_field=serializers.DictField())
+    def get_attendance_summary(self, obj):
+        """Get attendance summary for the last 30 days"""
+        from datetime import date, timedelta
+        from attendance.models import Attendance
+        
+        thirty_days_ago = date.today() - timedelta(days=30)
+        recent_attendance = Attendance.objects.filter(
+            employee=obj,
+            date__gte=thirty_days_ago
+        )
+        
+        return {
+            'total_days': recent_attendance.count(),
+            'present_days': recent_attendance.filter(status='PRESENT').count(),
+            'absent_days': recent_attendance.filter(status='ABSENT').count(),
+            'late_days': recent_attendance.filter(status='LATE').count()
+        }
+
+class EmployeeCreateUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for creating and updating employees
+    
+    Includes validation and business logic for employee data.
+    """
+    class Meta:
+        model = Employee
+        fields = [
+            'name', 'email', 'phone_number', 'address',
+            'date_of_birth', 'gender', 'date_joined',
+            'department', 'salary', 'position', 'status'
+        ]
+
+    def validate_email(self, value):
+        """Ensure email is unique"""
+        if Employee.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Employee with this email already exists.")
+        return value
+
+    def validate_salary(self, value):
+        """Validate salary range"""
+        if value is not None and value < 0:
+            raise serializers.ValidationError("Salary cannot be negative.")
+        return value
+
+# =============================================================================
+# 6. ENHANCED VIEWSETS WITH SWAGGER DOCUMENTATION
+# =============================================================================
+
+# File: employees/views.py (Enhanced with Swagger docs)
+
+from rest_framework import viewsets, filters, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+from django.db.models import Count, Q
+from .models import Employee, Department
+from .serializers import (
+    DepartmentSerializer, EmployeeListSerializer,
+    EmployeeDetailSerializer, EmployeeCreateUpdateSerializer
+)
+
+class DepartmentViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing departments
+    
+    Provides complete CRUD operations for departments with additional
+    functionality to manage department-specific operations.
+    """
+    queryset = Department.objects.all()
+    serializer_class = DepartmentSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'description']
+    ordering_fields = ['name', 'created_at', 'employee_count']
+    ordering = ['name']
+
+    @swagger_auto_schema(
+        method='get',
+        operation_summary='Get department employees',
+        operation_description='Retrieve all employees belonging to a specific department',
+        manual_parameters=[
+            openapi.Parameter(
+                'status',
+                openapi.IN_QUERY,
+                description='Filter employees by status (ACTIVE, INACTIVE, TERMINATED)',
+                type=openapi.TYPE_STRING,
+                enum=['ACTIVE', 'INACTIVE', 'TERMINATED']
+            )
+        ],
+        responses={
+            200: openapi.Response(
+                description='List of employees in the department',
+                schema=EmployeeListSerializer(many=True)
+            ),
+            404: openapi.Response(description='Department not found')
+        }
+    )
+    @action(detail=True, methods=['get'])
+    def employees(self, request, pk=None):
+        """Get all employees in this department with optional status filtering"""
+        department = self.get_object()
+        employees = department.employees.all()
+        
+        # Filter by status if provided
+        status_filter = request.query_params.get('status')
+        if status_filter:
+            employees = employees.filter(status=status_filter)
+        
+        serializer = EmployeeListSerializer(employees, many=True)
+        return Response({
+            'department': department.name,
+            'total_employees': employees.count(),
+            'employees': serializer.data
+        })
+
+    @swagger_auto_schema(
+        method='get',
+        operation_summary='Get department statistics',
+        operation_description='Get comprehensive statistics for a specific department',
+        responses={
+            200: openapi.Response(
+                description='Department statistics',
+                examples={
+                    'application/json': {
+                        'department_name': 'Engineering',
+                        'total_employees': 45,
+                        'active_employees': 42,
+                        'inactive_employees': 3,
+                        'average_salary': 75000,
+                        'gender_distribution': {
+                            'M': 28,
+                            'F': 17
+                        }
+                    }
+                }
+            )
+        }
+    )
+    @action(detail=True, methods=['get'])
+    def statistics(self, request, pk=None):
+        """Get comprehensive statistics for this department"""
+        department = self.get_object()
+        employees = department.employees.all()
+        
+        stats = {
+            'department_name': department.name,
+            'total_employees': employees.count(),
+            'active_employees': employees.filter(status='ACTIVE').count(),
+            'inactive_employees': employees.filter(status__in=['INACTIVE', 'TERMINATED']).count(),
+            'average_salary': employees.aggregate(avg_salary=models.Avg('salary'))['avg_salary'] or 0,
+            'gender_distribution': dict(
+                employees.values('gender').annotate(count=Count('id')).values_list('gender', 'count')
+            )
+        }
+        
+        return Response(stats)
+
+class EmployeeViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for comprehensive employee management
+    
+    Provides full CRUD operations, advanced filtering, search capabilities,
+    and additional employee-specific actions like status management and statistics.
+    """
+    queryset = Employee.objects.select_related('department').all()
+    permission_classes = [IsAuthenticated]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['department', 'status', 'gender', 'position']
+    search_fields = ['name', 'email', 'employee_id', 'position']
+    ordering_fields = ['name', 'date_joined', 'salary', 'employee_id']
+    ordering = ['-date_joined']
+
+    def get_serializer_class(self):
+        """Return appropriate serializer based on action"""
+        if self.action == 'list':
+            return EmployeeListSerializer
+        elif self.action in ['create', 'update', 'partial_update']:
+            return EmployeeCreateUpdateSerializer
+        return EmployeeDetailSerializer
+
+    @swagger_auto_schema(
+        operation_summary='List employees',
+        operation_description='''
+        Retrieve a paginated list of employees with advanced filtering options.
+        
+        **Filtering Options:**
+        - `department`: Filter by department ID
+        - `status`: Filter by employee status (ACTIVE, INACTIVE, TERMINATED)
+        - `gender`: Filter by gender (M, F, O)
+        - `position`: Filter by job position
+        - `search`: Search across name, email, employee_id, and position
+        - `date_from`: Filter employees joined from this date (YYYY-MM-DD)
+        - `date_to`: Filter employees joined until this date (YYYY-MM-DD)
+        - `salary_min`: Minimum salary filter
+        - `salary_max`: Maximum salary filter
+        
+        **Ordering Options:**
+        - `ordering`: Sort by field (prefix with - for descending)
+        - Available fields: name, date_joined, salary, employee_id
+        ''',
+        manual_parameters=[
+            openapi.Parameter(
+                'department', openapi.IN_QUERY,
+                description='Filter by department ID',
+                type=openapi.TYPE_INTEGER
+            ),
+            openapi.Parameter(
+                'status', openapi.IN_QUERY,
+                description='Filter by employee status',
+                type=openapi.TYPE_STRING,
+                enum=['ACTIVE', 'INACTIVE', 'TERMINATED']
+            ),
+            openapi.Parameter(
+                'date_from', openapi.IN_QUERY,
+                description='Filter employees joined from this date (YYYY-MM-DD)',
+                type=openapi.TYPE_STRING,
+                format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'date_to', openapi.IN_QUERY,
+                description='Filter employees joined until this date (YYYY-MM-DD)',
+                type=openapi.TYPE_STRING,
+                format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'salary_min', openapi.IN_QUERY,
+                description='Minimum salary filter',
+                type=openapi.TYPE_NUMBER
+            ),
+            openapi.Parameter(
+                'salary_max', openapi.IN_QUERY,
+                description='Maximum salary filter',
+                type=openapi.TYPE_NUMBER
+            )
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        """List employees with enhanced filtering"""
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        # Additional custom filters
+        date_from = request.query_params.get('date_from')
+        date_to = request.query_params.get('date_to')
+        salary_min = request.query_params.get('salary_min')
+        salary_max = request.query_params.get('salary_max')
+        
+        if date_from:
+            queryset = queryset.filter(date_joined__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(date_joined__lte=date_to)
+        if salary_min:
+            queryset = queryset.filter(salary__gte=salary_min)
+        if salary_max:
+            queryset = queryset.filter(salary__lte=salary_max)
+        
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        method='get',
+        operation_summary='Get employee statistics',
+        operation_description='Get comprehensive statistics about all employees including counts, distributions, and trends',
+        responses={
+            200: openapi.Response(
+                description='Employee statistics',
+                examples={
+                    'application/json': {
+                        'total_employees': 150,
+                        'active_employees': 145,
+                        'inactive_employees': 5,
+                        'departments': [
+                            {'name': 'Engineering', 'employee_count': 45},
+                            {'name': 'Marketing', 'employee_count': 20}
+                        ],
+                        'gender_distribution': [
+                            {'gender': 'M', 'count': 80},
+                            {'gender': 'F', 'count': 65}
+                        ],
+                        'status_distribution': {
+                            'ACTIVE': 145,
+                            'INACTIVE': 3,
+                            'TERMINATED': 2
+                        },
+                        'average_salary': 65000,
+                        'salary_ranges': {
+                            'below_50k': 25,
+                            '50k_to_80k': 75,
+                            'above_80k': 50
+                        }
+                    }
+                }
+            )
+        }
+    )
+    @action(detail=False, methods=['get'])
+    def statistics(self, request):
+        """Get comprehensive employee statistics"""
+        from django.db.models import Avg, Count, Q
+        
+        queryset = self.get_queryset()
+        
+        # Basic counts
+        total_employees = queryset.count()
+        active_employees = queryset.filter(status='ACTIVE').count()
+        
+        # Department distribution
+        department_stats = Department.objects.annotate(
+            employee_count=Count('employees')
+        ).values('name', 'employee_count').order_by('-employee_count')
+        
+        # Gender distribution
+        gender_stats = queryset.values('gender').annotate(
+            count=Count('id')
+        ).order_by('gender')
+        
+        # Status distribution
+        status_stats = dict(
+            queryset.values('status').annotate(
+                count=Count('id')
+            ).values_list('status', 'count')
+        )
+        
+        # Salary statistics
+        salary_data = queryset.aggregate(avg_salary=Avg('salary'))
+        salary_ranges = {
+            'below_50k': queryset.filter(salary__lt=50000).count(),
+            '50k_to_80k': queryset.filter(salary__gte=50000, salary__lt=80000).count(),
+            'above_80k': queryset.filter(salary__gte=80000).count()
+        }
+        
+        return Response({
+            'total_employees': total_employees,
+            'active_employees': active_employees,
+            'inactive_employees': total_employees - active_employees,
+            'departments': list(department_stats),
+            'gender_distribution': list(gender_stats),
+            'status_distribution': status_stats,
+            'average_salary': round(salary_data['avg_salary'] or 0, 2),
+            'salary_ranges': salary_ranges
+        })
+
+    @swagger_auto_schema(
+        method='post',
+        operation_summary='Activate employee',
+        operation_description='Change employee status to ACTIVE',
+        responses={
+            200: openapi.Response(
+                description='Employee activated successfully',
+                examples={'application/json': {'message': 'Employee activated successfully', 'status': 'ACTIVE'}}
+            ),
+            404: openapi.Response(description='Employee not found')
+        }
+    )
+    @action(detail=True, methods=['post'])
+    def activate(self, request, pk=None):
+        """Activate an employee (set status to ACTIVE)"""
+        employee = self.get_object()
+        employee.status = 'ACTIVE'
+        employee.save()
+        return Response({
+            'message': 'Employee activated successfully',
+            'status': employee.status
+        })
+
+    @swagger_auto_schema(
+        method='post',
+        operation_summary='Deactivate employee',
+        operation_description='Change employee status to INACTIVE',
+        responses={
+            200: openapi.Response(
+                description='Employee deactivated successfully',
+                examples={'application/json': {'message': 'Employee deactivated successfully', 'status': 'INACTIVE'}}
+            )
+        }
+    )
+    @action(detail=True, methods=['post'])
+    def deactivate(self, request, pk=None):
+        """Deactivate an employee (set status to INACTIVE)"""
+        employee = self.get_object()
+        employee.status = 'INACTIVE'
+        employee.save()
+        return Response({
+            'message': 'Employee deactivated successfully',
+            'status': employee.status
+        })
+
+    @swagger_auto_schema(
+        method='get',
+        operation_summary='Get employee attendance summary',
+        operation_description='Get attendance summary for a specific employee',
+        manual_parameters=[
+            openapi.Parameter(
+                'days', openapi.IN_QUERY,
+                description='Number of days to include in summary (default: 30)',
+                type=openapi.TYPE_INTEGER
+            )
+        ],
+        responses={
+            200: openapi.Response(
+                description='Employee attendance summary',
+                examples={
+                    'application/json': {
+                        'employee_id': 'EMP001',
+                        'employee_name': 'John Doe',
+                        'period_days': 30,
+                        'total_working_days': 22,
+                        'present_days': 20,
+                        'absent_days': 2,
+                        'late_days': 1,
+                        'attendance_rate': 90.9
+                    }
+                }
+            )
+        }
+    )
+    @action(detail=True, methods=['get'])
+    def attendance_summary(self, request, pk=None):
+        """Get attendance summary for this employee"""
+        from datetime import date, timedelta
+        from attendance.models import Attendance
+        
+        employee = self.get_object()
+        days = int(request.query_params.get('days', 30))
+        start_date = date.today() - timedelta(days=days)
+        
+        attendance_records = Attendance.objects.filter(
+            employee=employee,
+            date__gte=start_date
+        )
+        
+        total_days = attendance_records.count()
+        present_days = attendance_records.filter(status='PRESENT').count()
+        absent_days = attendance_records.filter(status='ABSENT').count()
+        late_days = attendance_records.filter(status='LATE').count()
+        
+        attendance_rate = (present_days / total_days * 100) if total_days > 0 else 0
+        
+        return Response({
+            'employee_id': employee.employee_id,
+            'employee_name': employee.name,
+            'period_days': days,
+            'total_working_days': total_days,
+            'present_days': present_days,
+            'absent_days': absent_days,
+            'late_days': late_days,
+            'attendance_rate': round(attendance_rate, 2)
+        })
+
+# =============================================================================
+# 7. HEALTH CHECK ENDPOINT
+# =============================================================================
+
+# File: employee_project/health_urls.py
+
+from django.urls import path
+from . import health_views
+
+urlpatterns = [
+    path('', health_views.api_health_check, name='health-check'),
+    path('detailed/', health_views.detailed_health_check, name='detailed-health-check'),
+]
+
+# File: employee_project/health_views.py
+
+from django.http import JsonResponse
+from django.db import connection
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from datetime import datetime
+import sys
+import django
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def api_health_check(request):
+    """
+    Simple API health check endpoint
+    """
+    return JsonResponse({
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat(),
+        'version': 'v1.0.0',
+        'service': 'Employee Management API'
+    })
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def detailed_health_check(request):
+    """
+    Detailed health check with system information
+    """
+    try:
+        # Check database connection
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT 1')
+        db_status = 'healthy'
+    except Exception as e:
+        db_status = f'error: {str(e)}'
+    
+    return JsonResponse({
+        'status': 'healthy' if db_status == 'healthy' else 'unhealthy',
+        'timestamp': datetime.now().isoformat(),
+        'version': 'v1.0.0',
+        'service': 'Employee Management API',
+        'checks': {
+            'database': db_status,
+            'python_version': f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+            'django_version': django.get_version()
+        },
+        'endpoints': {
+            'swagger': '/swagger/',
+            'redoc': '/redoc/',
+            'admin': '/admin/',
+            'employees': '/api/employees/',
+            'attendance': '/api/attendance/',
+            'performance': '/api/performance/'
+        }
+    })
+
+# =============================================================================
+# 8. CUSTOM API DOCUMENTATION LANDING PAGE
+# =============================================================================
+
+# File: templates/swagger/custom_swagger.html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Management API - Documentation</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@3.52.5/swagger-ui.css" />
+    <style>
+        .swagger-ui .topbar { display: none; }
+        .swagger-ui .info { margin: 50px 0; }
+        .swagger-ui .info .title { color: #3b4151; }
+        .custom-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .custom-header h1 { margin: 0; font-size: 2.5em; }
+        .custom-header p { margin: 10px 0 0 0; opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div class="custom-header">
+        <h1>🏢 Employee Management API</h1>
+        <p>Comprehensive REST API for Employee, Attendance, and Performance Management</p>
+    </div>
+    
+    <div id="swagger-ui"></div>
+    
+    <script src="https://unpkg.com/swagger-ui-dist@3.52.5/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@3.52.5/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function() {
+            SwaggerUIBundle({
+                url: '/swagger.json',
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                validatorUrl: "https://validator.swagger.io/validator",
+                displayRequestDuration: true,
+                docExpansion: 'none',
+                filter: true,
+                showExtensions: true,
+                showCommonExtensions: true,
+                defaultModelsExpandDepth: 2,
+                defaultModelExpandDepth: 2
+            })
+        };
+    </script>
+</body>
+</html>
+
+# =============================================================================
+# 9. INSTALLATION AND SETUP INSTRUCTIONS
+# =============================================================================
+
+"""
+SWAGGER UI SETUP - STEP BY STEP INSTALLATION
+
+1. INSTALL REQUIRED PACKAGES
+   Add to requirements.txt:
+   ```
+   drf-yasg==1.21.7
+   swagger-spec-validator==3.0.3
+   ```
+   
+   Install packages:
+   ```bash
+   pip install drf-yasg swagger-spec-validator
+   ```
+
+2. UPDATE SETTINGS
+   Add 'drf_yasg' to INSTALLED_APPS in settings.py
+   Add SWAGGER_SETTINGS and REDOC_SETTINGS configurations
+
+3. CREATE SWAGGER CONFIG
+   Create employee_project/swagger_config.py with API info and schema view
+
+4. UPDATE MAIN URLS
+   Add Swagger URLs to employee_project/urls.py
+
+5. ENHANCE SERIALIZERS
+   Add help_text to fields
+   Use swagger_serializer_method for custom fields
+   Add comprehensive docstrings
+
+6. ENHANCE VIEWSETS
+   Add swagger_auto_schema decorators
+   Include operation summaries and descriptions
+   Document parameters and responses
+   Add example responses
+
+7. CREATE HEALTH CHECK
+   Add health check endpoints for API monitoring
+
+8. TEST SETUP
+   Run migrations: python manage.py migrate
+   Start server: python manage.py runserver
+   Visit: http://localhost:8000/swagger/
+
+9. URLS TO ACCESS
+   - Swagger UI: http://localhost:8000/swagger/
+   - ReDoc: http://localhost:8000/redoc/
+   - OpenAPI JSON: http://localhost:8000/openapi.json
+   - Health Check: http://localhost:8000/api/health/
+
+10. AUTHENTICATION IN SWAGGER
+    - Click "Authorize" button in Swagger UI
+    - Enter: Token your_token_here
+    - Or login via Django admin first
+
+PRODUCTION CONSIDERATIONS:
+- Set DEBUG=False in production
+- Use HTTPS for API documentation
+- Implement rate limiting for documentation endpoints
+- Consider authentication for API docs in production
+- Enable CORS for frontend integration
+- Use environment variables for sensitive configuration
+"""
+
+# =============================================================================
+# 10. TROUBLESHOOTING GUIDE
+# =============================================================================
+
+"""
+COMMON ISSUES AND SOLUTIONS:
+
+1. SWAGGER UI NOT LOADING
+   - Check if 'drf_yasg' is in INSTALLED_APPS
+   - Verify SWAGGER_SETTINGS configuration
+   - Check for JavaScript errors in browser console
+   - Ensure static files are being served correctly
+
+2. AUTHENTICATION ISSUES
+   - Verify token format: 'Token your_token_here'
+   - Check if user has valid token in database
+   - Ensure proper permission classes on views
+
+3. SCHEMA GENERATION ERRORS
+   - Check for circular imports in serializers
+   - Verify all serializer fields have proper types
+   - Use swagger_auto_schema for complex views
+
+4. MISSING API ENDPOINTS
+   - Verify URL patterns are correctly configured
+   - Check if viewsets are properly registered with routers
+   - Ensure views have proper HTTP methods allowed
+
+5. SWAGGER UI STYLING ISSUES
+   - Clear browser cache
+   - Check for CSS conflicts
+   - Verify static file serving in development
+
+6. PRODUCTION DEPLOYMENT
+   - Collect static files: python manage.py collectstatic
+   - Set proper ALLOWED_HOSTS
+   - Configure reverse proxy for API documentation
+   - Enable HTTPS for security
+"""
